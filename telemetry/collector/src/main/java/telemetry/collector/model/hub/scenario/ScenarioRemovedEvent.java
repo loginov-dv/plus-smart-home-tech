@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.avro.specific.SpecificRecordBase;
+import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
 import telemetry.collector.model.hub.HubEvent;
 import telemetry.collector.model.hub.HubEventType;
 
@@ -23,5 +26,18 @@ public class ScenarioRemovedEvent extends HubEvent {
     @NotNull
     public HubEventType getType() {
         return HubEventType.SCENARIO_REMOVED;
+    }
+
+    @Override
+    public SpecificRecordBase toAvro() {
+        ScenarioRemovedEventAvro scenarioRemovedEventAvro = ScenarioRemovedEventAvro.newBuilder()
+                .setName(this.getName())
+                .build();
+
+        return HubEventAvro.newBuilder()
+                .setHubId(this.getHubId())
+                .setTimestamp(this.getTimestamp())
+                .setPayload(scenarioRemovedEventAvro)
+                .build();
     }
 }
