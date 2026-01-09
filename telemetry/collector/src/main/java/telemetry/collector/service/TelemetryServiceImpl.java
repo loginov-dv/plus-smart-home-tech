@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import telemetry.collector.KafkaAvroProducer;
 import telemetry.collector.model.hub.HubEvent;
 import telemetry.collector.model.sensor.SensorEvent;

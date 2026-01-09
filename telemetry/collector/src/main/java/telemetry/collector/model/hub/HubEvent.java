@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.avro.specific.SpecificRecordBase;
+
 import telemetry.collector.model.hub.device.DeviceAddedEvent;
 import telemetry.collector.model.hub.device.DeviceRemovedEvent;
 import telemetry.collector.model.hub.scenario.ScenarioAddedEvent;
