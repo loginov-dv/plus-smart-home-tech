@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.avro.specific.SpecificRecordBase;
 
 import java.time.Instant;
 
@@ -37,4 +38,6 @@ public abstract class SensorEvent {
 
     @NotNull
     public abstract SensorEventType getType();
+
+    public abstract SpecificRecordBase toAvro();
 }

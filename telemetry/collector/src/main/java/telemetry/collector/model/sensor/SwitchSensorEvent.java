@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.avro.specific.SpecificRecordBase;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
 @Getter
 @Setter
@@ -18,5 +21,19 @@ public class SwitchSensorEvent extends SensorEvent {
     @NotNull
     public SensorEventType getType() {
         return SensorEventType.SWITCH_SENSOR_EVENT;
+    }
+
+    @Override
+    public SpecificRecordBase toAvro() {
+        SwitchSensorAvro switchSensorAvro = SwitchSensorAvro.newBuilder()
+                .setState(this.getState())
+                .build();
+
+        return SensorEventAvro.newBuilder()
+                .setId(this.getId())
+                .setHubId(this.getHubId())
+                .setTimestamp(this.getTimestamp())
+                .setPayload(switchSensorAvro)
+                .build();
     }
 }

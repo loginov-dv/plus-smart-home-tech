@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.avro.specific.SpecificRecordBase;
+import ru.yandex.practicum.kafka.telemetry.event.ClimateSensorAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
 @Getter
 @Setter
@@ -22,5 +25,21 @@ public class ClimateSensorEvent extends SensorEvent {
     @NotNull
     public SensorEventType getType() {
         return SensorEventType.CLIMATE_SENSOR_EVENT;
+    }
+
+    @Override
+    public SpecificRecordBase toAvro() {
+        ClimateSensorAvro climateSensorAvro = ClimateSensorAvro.newBuilder()
+                .setTemperatureC(this.getTemperatureC())
+                .setHumidity(this.getHumidity())
+                .setCo2Level(this.getCo2Level())
+                .build();
+
+        return SensorEventAvro.newBuilder()
+                .setId(this.getId())
+                .setHubId(this.getHubId())
+                .setTimestamp(this.getTimestamp())
+                .setPayload(climateSensorAvro)
+                .build();
     }
 }

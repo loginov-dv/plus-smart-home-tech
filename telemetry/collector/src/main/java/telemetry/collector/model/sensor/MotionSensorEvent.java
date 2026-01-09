@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.avro.specific.SpecificRecordBase;
+import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
 @Getter
 @Setter
@@ -22,5 +25,21 @@ public class MotionSensorEvent extends SensorEvent {
     @NotNull
     public SensorEventType getType() {
         return SensorEventType.MOTION_SENSOR_EVENT;
+    }
+
+    @Override
+    public SpecificRecordBase toAvro() {
+        MotionSensorAvro motionSensorAvro = MotionSensorAvro.newBuilder()
+                .setLinkQuality(this.getLinkQuality())
+                .setMotion(this.getMotion())
+                .setVoltage(this.getVoltage())
+                .build();
+
+        return SensorEventAvro.newBuilder()
+                .setId(this.getId())
+                .setHubId(this.getHubId())
+                .setTimestamp(this.getTimestamp())
+                .setPayload(motionSensorAvro)
+                .build();
     }
 }
