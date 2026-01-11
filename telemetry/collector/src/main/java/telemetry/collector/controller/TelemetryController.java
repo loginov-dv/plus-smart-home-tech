@@ -22,12 +22,14 @@ public class TelemetryController {
     @PostMapping("/sensors")
     public void collectSensorEvent(@Valid @RequestBody SensorEvent sensorEvent) {
         log.debug("POST /events/sensors: {}", sensorEvent);
+        log.debug("Sensor event type: {}", sensorEvent.getType());
         telemetryService.sendSensorEvent(sensorEvent);
     }
 
     @PostMapping("/hubs")
     public void collectHubEvent(@Valid @RequestBody HubEvent hubEvent) {
         log.debug("POST /events/hubs: {}",hubEvent);
+        log.debug("Hub event type: {}", hubEvent.getType());
         telemetryService.sendHubEvent(hubEvent);
     }
 }

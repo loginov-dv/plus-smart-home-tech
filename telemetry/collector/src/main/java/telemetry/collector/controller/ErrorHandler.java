@@ -25,16 +25,19 @@ public class ErrorHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        log.warn("400 {}", e.getMessage(), e);
+    public ApiError handleMethodArgumentNotValidException(final MethodArgumentNotValidException ex) {
+        log.warn("400 {}", ex.getMessage(), ex);
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
 
-        e.printStackTrace(printWriter);
+        ex.printStackTrace(printWriter);
+
+        Object invalidRequestBody = ex.getBindingResult().getTarget();
+        log.debug("Invalid object received: {}", invalidRequestBody);
 
         Map<String, String> errors = new HashMap<>();
-        e.getBindingResult().getFieldErrors().forEach((error) -> {
+        ex.getBindingResult().getFieldErrors().forEach((error) -> {
             String fieldName = error.getField();
             String errorMessage = error.getDefaultMessage();
 
