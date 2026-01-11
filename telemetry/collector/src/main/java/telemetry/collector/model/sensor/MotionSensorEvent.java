@@ -1,6 +1,7 @@
 package telemetry.collector.model.sensor;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,10 +17,14 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 @NoArgsConstructor
 public class MotionSensorEvent extends SensorEvent {
     @NotNull
+    @PositiveOrZero
     private Integer linkQuality;
+
     @NotNull
     private Boolean motion;
+
     @NotNull
+    @PositiveOrZero
     private Integer voltage;
 
     @Override

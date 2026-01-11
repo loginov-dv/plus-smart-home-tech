@@ -1,5 +1,7 @@
 package telemetry.collector.model.sensor;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +18,13 @@ import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 @NoArgsConstructor
 public class TemperatureSensorEvent extends SensorEvent {
     @NotNull
+    @Max(45)
+    @Min(-30)
     private Integer temperatureC;
+
     @NotNull
+    @Max(113)
+    @Min(-22)
     private Integer temperatureF;
 
     @Override

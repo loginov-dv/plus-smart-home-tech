@@ -1,6 +1,7 @@
 package telemetry.collector.model.sensor;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +16,11 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 @ToString(callSuper = true)
 @NoArgsConstructor
 public class LightSensorEvent extends SensorEvent {
+
+    @PositiveOrZero
     private Integer linkQuality;
+
+    @PositiveOrZero
     private Integer luminosity;
 
     @Override
