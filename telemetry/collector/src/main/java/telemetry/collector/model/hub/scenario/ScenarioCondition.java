@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
+import telemetry.collector.annotation.ScenarioConditionValue;
 
 @Getter
 @Setter
@@ -17,7 +18,8 @@ public class ScenarioCondition {
     private String sensorId;
     private ScenarioConditionType type;
     private ScenarioOperationType operation;
-    private Integer value;
+    @ScenarioConditionValue
+    private Object value;
 
     public ScenarioConditionAvro toAvro() {
         return ScenarioConditionAvro.newBuilder()
