@@ -30,11 +30,11 @@ public class TelemetryServiceImpl implements TelemetryService {
 
     @Override
     public void sendSensorEvent(SensorEvent sensorEvent) {
-        producer.send(sensorsTopic, sensorEvent.toAvro());
+        producer.send(sensorsTopic, sensorEvent.getHubId(), sensorEvent.toAvro());
     }
 
     @Override
     public void sendHubEvent(HubEvent hubEvent) {
-        producer.send(hubsTopic, hubEvent.toAvro());
+        producer.send(hubsTopic, hubEvent.getHubId(), hubEvent.toAvro());
     }
 }
