@@ -2,6 +2,7 @@ package telemetry.collector.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
+import telemetry.collector.model.rest.hub.scenario.ScenarioCondition;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,7 +11,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация для проверки корректности поля {@code value} у
- * {@link telemetry.collector.model.hub.scenario.ScenarioCondition}.
+ * {@link ScenarioCondition}.
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

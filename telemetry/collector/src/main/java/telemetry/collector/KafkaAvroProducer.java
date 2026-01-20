@@ -42,6 +42,7 @@ public class KafkaAvroProducer {
     @PreDestroy
     public void preDestroy() {
         if (producer != null) {
+            log.info("Closing Kafka-producer...");
             producer.flush();
             producer.close();
         }
