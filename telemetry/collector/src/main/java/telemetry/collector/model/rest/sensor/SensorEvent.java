@@ -1,4 +1,4 @@
-package telemetry.collector.model.sensor;
+package telemetry.collector.model.rest.sensor;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

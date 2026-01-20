@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub;
+package telemetry.collector.model.rest.hub;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -10,10 +10,10 @@ import lombok.Setter;
 import lombok.ToString;
 import org.apache.avro.specific.SpecificRecordBase;
 
-import telemetry.collector.model.hub.device.DeviceAddedEvent;
-import telemetry.collector.model.hub.device.DeviceRemovedEvent;
-import telemetry.collector.model.hub.scenario.ScenarioAddedEvent;
-import telemetry.collector.model.hub.scenario.ScenarioRemovedEvent;
+import telemetry.collector.model.rest.hub.device.DeviceAddedEvent;
+import telemetry.collector.model.rest.hub.device.DeviceRemovedEvent;
+import telemetry.collector.model.rest.hub.scenario.ScenarioAddedEvent;
+import telemetry.collector.model.rest.hub.scenario.ScenarioRemovedEvent;
 
 import java.time.Instant;
 

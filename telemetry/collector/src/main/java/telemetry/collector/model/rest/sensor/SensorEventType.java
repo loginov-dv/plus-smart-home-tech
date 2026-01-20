@@ -1,4 +1,4 @@
-package telemetry.collector.model.sensor;
+package telemetry.collector.model.rest.sensor;
 
 public enum SensorEventType {
     CLIMATE_SENSOR_EVENT,

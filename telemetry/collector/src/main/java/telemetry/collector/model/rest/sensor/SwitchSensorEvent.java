@@ -1,51 +1,40 @@
-package telemetry.collector.model.sensor;
+package telemetry.collector.model.rest.sensor;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.avro.specific.SpecificRecordBase;
 
-import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
 @Getter
 @Setter
 @ToString(callSuper = true)
 @NoArgsConstructor
-public class MotionSensorEvent extends SensorEvent {
+public class SwitchSensorEvent extends SensorEvent {
     @NotNull
-    @PositiveOrZero
-    private Integer linkQuality;
-
-    @NotNull
-    private Boolean motion;
-
-    @NotNull
-    @PositiveOrZero
-    private Integer voltage;
+    private Boolean state;
 
     @Override
     @NotNull
     public SensorEventType getType() {
-        return SensorEventType.MOTION_SENSOR_EVENT;
+        return SensorEventType.SWITCH_SENSOR_EVENT;
     }
 
     @Override
     public SpecificRecordBase toAvro() {
-        MotionSensorAvro motionSensorAvro = MotionSensorAvro.newBuilder()
-                .setLinkQuality(this.getLinkQuality())
-                .setMotion(this.getMotion())
-                .setVoltage(this.getVoltage())
+        SwitchSensorAvro switchSensorAvro = SwitchSensorAvro.newBuilder()
+                .setState(this.getState())
                 .build();
 
         return SensorEventAvro.newBuilder()
                 .setId(this.getId())
                 .setHubId(this.getHubId())
                 .setTimestamp(this.getTimestamp())
-                .setPayload(motionSensorAvro)
+                .setPayload(switchSensorAvro)
                 .build();
     }
 }

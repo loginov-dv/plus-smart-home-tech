@@ -1,4 +1,4 @@
-package telemetry.collector.model.sensor;
+package telemetry.collector.model.rest.sensor;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;

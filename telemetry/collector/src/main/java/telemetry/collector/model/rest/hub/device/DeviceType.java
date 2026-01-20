@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub.device;
+package telemetry.collector.model.rest.hub.device;
 
 import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
 import telemetry.collector.exception.UnknownTypeException;

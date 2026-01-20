@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub.device;
+package telemetry.collector.model.rest.hub.device;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

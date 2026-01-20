@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub;
+package telemetry.collector.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

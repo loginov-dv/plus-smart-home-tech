@@ -1,50 +1,51 @@
-package telemetry.collector.model.sensor;
+package telemetry.collector.model.rest.sensor;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.avro.specific.SpecificRecordBase;
 
+import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 
 @Getter
 @Setter
 @ToString(callSuper = true)
 @NoArgsConstructor
-public class TemperatureSensorEvent extends SensorEvent {
+public class MotionSensorEvent extends SensorEvent {
     @NotNull
-    @Max(45)
-    @Min(-30)
-    private Integer temperatureC;
+    @PositiveOrZero
+    private Integer linkQuality;
 
     @NotNull
-    @Max(113)
-    @Min(-22)
-    private Integer temperatureF;
+    private Boolean motion;
+
+    @NotNull
+    @PositiveOrZero
+    private Integer voltage;
 
     @Override
     @NotNull
     public SensorEventType getType() {
-        return SensorEventType.TEMPERATURE_SENSOR_EVENT;
+        return SensorEventType.MOTION_SENSOR_EVENT;
     }
 
     @Override
     public SpecificRecordBase toAvro() {
-        TemperatureSensorAvro temperatureSensorAvro = TemperatureSensorAvro.newBuilder()
-                .setTemperatureC(this.getTemperatureC())
-                .setTemperatureF(this.getTemperatureF())
+        MotionSensorAvro motionSensorAvro = MotionSensorAvro.newBuilder()
+                .setLinkQuality(this.getLinkQuality())
+                .setMotion(this.getMotion())
+                .setVoltage(this.getVoltage())
                 .build();
 
         return SensorEventAvro.newBuilder()
                 .setId(this.getId())
                 .setHubId(this.getHubId())
                 .setTimestamp(this.getTimestamp())
-                .setPayload(temperatureSensorAvro)
+                .setPayload(motionSensorAvro)
                 .build();
     }
 }

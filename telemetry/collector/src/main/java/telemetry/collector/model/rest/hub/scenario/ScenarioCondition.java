@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub.scenario;
+package telemetry.collector.model.rest.hub.scenario;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

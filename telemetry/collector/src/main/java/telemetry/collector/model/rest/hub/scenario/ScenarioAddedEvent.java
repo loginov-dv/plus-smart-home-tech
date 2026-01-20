@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub.scenario;
+package telemetry.collector.model.rest.hub.scenario;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -14,9 +14,9 @@ import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
-import telemetry.collector.model.hub.HubEvent;
-import telemetry.collector.model.hub.HubEventType;
-import telemetry.collector.model.hub.device.DeviceAction;
+import telemetry.collector.model.rest.hub.HubEvent;
+import telemetry.collector.model.rest.hub.HubEventType;
+import telemetry.collector.model.rest.hub.device.DeviceAction;
 
 import java.util.List;
 

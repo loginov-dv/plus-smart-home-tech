@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub;
+package telemetry.collector.model.rest.hub;
 
 public enum HubEventType {
     DEVICE_ADDED,

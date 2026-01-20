@@ -1,4 +1,4 @@
-package telemetry.collector.model.hub.device;
+package telemetry.collector.model.rest.hub.device;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,8 +10,8 @@ import org.apache.avro.specific.SpecificRecordBase;
 
 import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import telemetry.collector.model.hub.HubEvent;
-import telemetry.collector.model.hub.HubEventType;
+import telemetry.collector.model.rest.hub.HubEvent;
+import telemetry.collector.model.rest.hub.HubEventType;
 
 @Getter
 @Setter
