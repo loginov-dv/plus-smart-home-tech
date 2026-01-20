@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import telemetry.collector.exception.HandlerNotFoundException;
 import telemetry.collector.exception.UnknownTypeException;
-import telemetry.collector.model.hub.ApiError;
+import telemetry.collector.model.ApiError;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -22,6 +23,22 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class ErrorHandler {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @ExceptionHandler(HandlerNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleHandlerNotFoundException(final HandlerNotFoundException ex) {
+        log.warn("400 {}", ex.getMessage(), ex);
+
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+        ex.printStackTrace(printWriter);
+
+        return new ApiError(ex.getMessage(),
+                "Unknown message type",
+                HttpStatus.BAD_REQUEST.name(),
+                LocalDateTime.now().format(formatter));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
