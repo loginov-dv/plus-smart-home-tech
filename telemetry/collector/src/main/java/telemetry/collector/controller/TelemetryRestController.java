@@ -8,16 +8,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import telemetry.collector.model.hub.HubEvent;
-import telemetry.collector.model.sensor.SensorEvent;
-import telemetry.collector.service.TelemetryService;
+import telemetry.collector.model.rest.hub.HubEvent;
+import telemetry.collector.model.rest.sensor.SensorEvent;
+import telemetry.collector.service.TelemetryRestService;
 
 @RestController
 @RequestMapping("/events")
 @RequiredArgsConstructor
 @Slf4j
-public class TelemetryController {
-    private final TelemetryService telemetryService;
+public class TelemetryRestController {
+    private final TelemetryRestService telemetryService;
 
     @PostMapping("/sensors")
     public void collectSensorEvent(@Valid @RequestBody SensorEvent sensorEvent) {

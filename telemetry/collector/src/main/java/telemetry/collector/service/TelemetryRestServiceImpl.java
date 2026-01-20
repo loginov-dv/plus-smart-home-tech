@@ -6,20 +6,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import telemetry.collector.KafkaAvroProducer;
-import telemetry.collector.model.hub.HubEvent;
-import telemetry.collector.model.sensor.SensorEvent;
+import telemetry.collector.model.rest.hub.HubEvent;
+import telemetry.collector.model.rest.sensor.SensorEvent;
 
 @Slf4j
 @Service
-public class TelemetryServiceImpl implements TelemetryService {
+public class TelemetryRestServiceImpl implements TelemetryRestService {
     private final KafkaAvroProducer producer;
     private final String sensorsTopic;
     private final String hubsTopic;
 
     @Autowired
-    public TelemetryServiceImpl(KafkaAvroProducer producer,
-                                @Value("${telemetry.collector.kafka.sensors.topic}") String sensorsTopic,
-                                @Value("${telemetry.collector.kafka.hubs.topic}") String hubsTopic) {
+    public TelemetryRestServiceImpl(KafkaAvroProducer producer,
+                                    @Value("${telemetry.collector.kafka.sensors.topic}") String sensorsTopic,
+                                    @Value("${telemetry.collector.kafka.hubs.topic}") String hubsTopic) {
         log.info("Topic for sensors messages: {}", sensorsTopic);
         log.info("Topic for hubs messages: {}", hubsTopic);
 
