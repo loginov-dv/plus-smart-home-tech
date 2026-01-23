@@ -11,16 +11,18 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import serialization.avro.GeneralAvroSerializer;
+
 import java.util.Properties;
 import java.util.concurrent.Future;
 
 @Component
 @Slf4j
-public class KafkaAvroProducer {
+public class KafkaCollectorProducer {
 
     private final KafkaProducer<String, SpecificRecordBase> producer;
 
-    public KafkaAvroProducer(@Value("${telemetry.collector.kafka.bootstrap.servers}") String serverUrl) {
+    public KafkaCollectorProducer(@Value("${telemetry.collector.kafka.bootstrap.servers}") String serverUrl) {
         log.info("Using Kafka-server at url: {}", serverUrl);
 
         Properties config = new Properties();
@@ -34,7 +36,7 @@ public class KafkaAvroProducer {
 
     public Future<RecordMetadata> send(String topic, String key, SpecificRecordBase value) {
         ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(topic, key, value);
-        log.debug("Sending message to topic [{}] with key [{}]: {}", topic, key, value);
+        log.debug("Sending message to the topic [{}] with key [{}]: {}", topic, key, value);
 
         return producer.send(record);
     }
