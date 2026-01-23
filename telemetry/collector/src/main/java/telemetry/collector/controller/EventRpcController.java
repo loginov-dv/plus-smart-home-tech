@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import telemetry.collector.KafkaAvroProducer;
+import telemetry.collector.KafkaCollectorProducer;
 import telemetry.collector.exception.HandlerNotFoundException;
 import telemetry.collector.model.rpc.hub.HubEventHandler;
 import telemetry.collector.model.rpc.sensor.SensorEventHandler;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @GrpcService
 public class EventRpcController extends CollectorControllerGrpc.CollectorControllerImplBase {
-    private final KafkaAvroProducer producer;
+    private final KafkaCollectorProducer producer;
     private final String sensorsTopic;
     private final String hubsTopic;
     private final Map<SensorEventProto.PayloadCase, SensorEventHandler> sensorEventHandlers;
@@ -36,7 +36,7 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
     @Autowired
     public EventRpcController(Set<SensorEventHandler> sensorEventHandlerSet,
                               Set<HubEventHandler> hubEventHandlerSet,
-                              KafkaAvroProducer producer,
+                              KafkaCollectorProducer producer,
                               @Value("${telemetry.collector.kafka.sensors.topic}") String sensorsTopic,
                               @Value("${telemetry.collector.kafka.hubs.topic}") String hubsTopic) {
         this.sensorEventHandlers = sensorEventHandlerSet.stream()
