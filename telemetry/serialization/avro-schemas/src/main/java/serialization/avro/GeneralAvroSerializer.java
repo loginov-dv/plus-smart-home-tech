@@ -1,6 +1,5 @@
-package telemetry.collector;
+package serialization.avro;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.DatumWriter;
@@ -12,8 +11,6 @@ import org.apache.kafka.common.serialization.Serializer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-// TODO: вынести в avro-schemas
-@Slf4j
 public final class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
     private final EncoderFactory encoderFactory = EncoderFactory.get();
     private BinaryEncoder encoder;
@@ -30,7 +27,6 @@ public final class GeneralAvroSerializer implements Serializer<SpecificRecordBas
 
             return out.toByteArray();
         } catch (IOException ex) {
-            log.warn("Error serializing data for topic [{}]", topic, ex);
             throw new SerializationException("Error serializing data for topic [" + topic + "]", ex);
         }
     }
