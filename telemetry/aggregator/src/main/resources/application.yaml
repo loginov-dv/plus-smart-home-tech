@@ -1,0 +1,17 @@
+# Spring
+spring:
+  main:
+    web-application-type: none
+
+# Logging
+logging:
+  level:
+    root: INFO
+    telemetry.aggregator: DEBUG
+
+# Kafka custom properties
+kafka:
+  server: 'localhost:9092'
+  topics:
+    sensors: 'telemetry.sensors.v1'
+    snapshots: 'telemetry.snapshots.v1'

@@ -1,4 +1,4 @@
-package telemetry.aggregator;
+package telemetry.aggregator.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
@@ -12,7 +12,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
@@ -20,6 +19,7 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import serialization.avro.GeneralAvroSerializer;
 import serialization.avro.SensorEventDeserializer;
+import telemetry.aggregator.config.KafkaConfig;
 
 import java.time.Duration;
 import java.util.*;
@@ -27,22 +27,17 @@ import java.util.*;
 @Component
 @Slf4j
 public class Aggregator {
+    private final KafkaConfig kafkaConfig;
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SpecificRecordBase> producer;
-    private final String sensorsTopic;
-    private final String snapshotTopic;
     private final Map<String, SensorsSnapshotAvro> snapshots = new HashMap<>();
 
-    // TODO: дублирование пропертей
-    public Aggregator(@Value("${telemetry.aggregator.kafka.bootstrap.servers}") String serverUrl,
-                      @Value("${telemetry.aggregator.kafka.sensors.topic}") String sensorsTopic,
-                      @Value("${telemetry.aggregator.kafka.snapshots.topic}") String snapshotTopic) {
-        log.info("Using Kafka-server at url: {}", serverUrl);
+    public Aggregator(KafkaConfig kafkaConfig) {
+        this.kafkaConfig = kafkaConfig;
 
-        this.sensorsTopic = sensorsTopic;
-        this.snapshotTopic = snapshotTopic;
         Properties consumerConfig = new Properties();
         Properties producerConfig = new Properties();
+        String serverUrl = kafkaConfig.getServer();
 
         consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "aggregator");
         consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "aggregator.group");
@@ -56,14 +51,16 @@ public class Aggregator {
 
         consumer = new KafkaConsumer<>(consumerConfig);
         producer = new KafkaProducer<>(producerConfig);
+        log.info("Aggregator is using Kafka-server at url: {}", serverUrl);
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
 
     public void start() {
         try {
+            String sensorsTopic = kafkaConfig.getTopics().getSensors();
             consumer.subscribe(List.of(sensorsTopic));
-            log.info("Subscribed to the topic: {}", sensorsTopic);
+            log.info("Aggregator subscribed to the topic: {}", sensorsTopic);
 
             while (true) {
                 ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(1000));
@@ -86,10 +83,10 @@ public class Aggregator {
                     snapshots.put(sensorEvent.getHubId(), snapshot);
 
                     log.debug("Sending updated snapshot to the topic [{}] with key [{}]",
-                            snapshotTopic, sensorEvent.getHubId());
+                            kafkaConfig.getTopics().getSnapshots(), sensorEvent.getHubId());
 
                     ProducerRecord<String, SpecificRecordBase> producerRecord =
-                            new ProducerRecord<>(snapshotTopic, sensorEvent.getHubId(), snapshot);
+                            new ProducerRecord<>(kafkaConfig.getTopics().getSnapshots(), sensorEvent.getHubId(), snapshot);
                     producer.send(producerRecord);
                 }
             }
@@ -102,10 +99,10 @@ public class Aggregator {
                 producer.flush();
                 consumer.commitSync();
             } finally {
-                log.info("Closing Kafka-producer...");
+                log.info("Closing Aggregator Kafka-producer...");
                 producer.close();
 
-                log.info("Closing Kafka-consumer...");
+                log.info("Closing Aggregator Kafka-consumer...");
                 consumer.close();
             }
         }
