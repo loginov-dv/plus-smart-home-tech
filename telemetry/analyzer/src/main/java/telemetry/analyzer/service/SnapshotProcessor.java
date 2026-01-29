@@ -10,7 +10,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
@@ -20,6 +19,7 @@ import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import serialization.avro.SensorsSnapshotDeserializer;
+import telemetry.analyzer.config.KafkaConfig;
 import telemetry.analyzer.handlers.snapshot.SensorEventHandler;
 import telemetry.analyzer.model.*;
 import telemetry.analyzer.repository.ScenarioRepository;
@@ -36,27 +36,25 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class SnapshotProcessor {
+    private final KafkaConfig kafkaConfig;
     private final KafkaConsumer<String, SensorsSnapshotAvro> consumer;
-    private final String snapshotTopic;
     private final HubRouterControllerGrpc.HubRouterControllerBlockingStub hubRouterClient;
     private final ScenarioRepository scenarioRepository;
     private final Map<Class<?>, SensorEventHandler> handlers;
 
     @Autowired
-    public SnapshotProcessor(@Value("${telemetry.analyzer.kafka.bootstrap.servers}") String serverUrl,
-                             @Value("${telemetry.analyzer.kafka.snapshots.topic}") String snapshotTopic,
+    public SnapshotProcessor(KafkaConfig kafkaConfig,
                              @GrpcClient("hub-router") HubRouterControllerGrpc.HubRouterControllerBlockingStub hubRouterClient,
                              ScenarioRepository scenarioRepository,
                              Set<SensorEventHandler> handlers) {
-        log.info("Using Kafka-server at url: {}", serverUrl);
-
-        this.snapshotTopic = snapshotTopic;
+        this.kafkaConfig = kafkaConfig;
         this.hubRouterClient = hubRouterClient;
         this.scenarioRepository = scenarioRepository;
         this.handlers = handlers.stream()
                 .collect(Collectors.toMap(SensorEventHandler::getType, Function.identity()));
 
         Properties config = new Properties();
+        String serverUrl = kafkaConfig.getServer();
 
         config.put(ConsumerConfig.CLIENT_ID_CONFIG, "snapshot.processor");
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer.snapshots.group");
@@ -65,14 +63,16 @@ public class SnapshotProcessor {
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorsSnapshotDeserializer.class);
 
         consumer = new KafkaConsumer<>(config);
+        log.info("SnapshotProcessor is using Kafka-server at url: {}", serverUrl);
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
 
     public void start() {
         try {
+            String snapshotTopic = kafkaConfig.getTopics().getSnapshots();
             consumer.subscribe(List.of(snapshotTopic));
-            log.info("Subscribed to the topic: {}", snapshotTopic);
+            log.info("SnapshotProcessor subscribed to the topic: {}", snapshotTopic);
 
             while (true) {
                 ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(1000));
@@ -89,7 +89,7 @@ public class SnapshotProcessor {
             try {
                 consumer.commitSync();
             } finally {
-                log.info("Closing analyzer Kafka-consumer...");
+                log.info("Closing SnapshotProcessor Kafka-consumer...");
                 consumer.close();
             }
         }

@@ -7,11 +7,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import serialization.avro.HubEventDeserializer;
+import telemetry.analyzer.config.KafkaConfig;
 import telemetry.analyzer.handlers.hub.HubEventHandler;
 
 import java.time.Duration;
@@ -25,20 +25,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class HubEventProcessor implements Runnable {
+    private final KafkaConfig kafkaConfig;
     private final KafkaConsumer<String, HubEventAvro> consumer;
-    private final String hubsTopic;
     private final Map<Class<?>, HubEventHandler> handlers;
 
-    public HubEventProcessor(@Value("${telemetry.analyzer.kafka.bootstrap.servers}") String serverUrl,
-                             @Value("${telemetry.analyzer.kafka.hubs.topic}") String hubsTopic,
+    public HubEventProcessor(KafkaConfig kafkaConfig,
                              Set<HubEventHandler> handlers) {
-        log.info("Using Kafka-server at url: {}", serverUrl);
-
-        this.hubsTopic = hubsTopic;
+        this.kafkaConfig = kafkaConfig;
         this.handlers = handlers.stream()
                 .collect(Collectors.toMap(HubEventHandler::getType, Function.identity()));
 
         Properties config = new Properties();
+        String serverUrl = kafkaConfig.getServer();
 
         config.put(ConsumerConfig.CLIENT_ID_CONFIG, "hub.processor");
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer.hubs.group");
@@ -47,6 +45,7 @@ public class HubEventProcessor implements Runnable {
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, HubEventDeserializer.class);
 
         consumer = new KafkaConsumer<>(config);
+        log.info("HubEventProcessor is using Kafka-server at url: {}", serverUrl);
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
@@ -54,8 +53,9 @@ public class HubEventProcessor implements Runnable {
     @Override
     public void run() {
         try {
+            String hubsTopic = kafkaConfig.getTopics().getHubs();
             consumer.subscribe(List.of(hubsTopic));
-            log.info("Subscribed to the topic: {}", hubsTopic);
+            log.info("HubEventProcessor subscribed to the topic: {}", hubsTopic);
 
             while (true) {
                 ConsumerRecords<String, HubEventAvro> records = consumer.poll(Duration.ofMillis(1000));
@@ -87,7 +87,7 @@ public class HubEventProcessor implements Runnable {
             try {
                 consumer.commitSync();
             } finally {
-                log.info("Closing analyzer Kafka-consumer...");
+                log.info("Closing HubEventProcessor Kafka-consumer...");
                 consumer.close();
             }
         }
