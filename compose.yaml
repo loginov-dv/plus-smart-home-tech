@@ -34,12 +34,19 @@ services:
                              --bootstrap-server kafka:29092'"
     init: true
 
-#  kafka-ui:
-#    container_name: kafka-ui
-#    image: provectuslabs/kafka-ui:latest
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      DYNAMIC_CONFIG_ENABLED: 'true'
-#    volumes:
-#      - ~kui/config.yml:/etc/kafkaui/dynamic_config.yaml
+  analyzer-db:
+    image: postgres:16.1
+    container_name: analyzer-db
+    depends_on:
+      - kafka
+    ports:
+        - "5432:5432"
+    environment:
+        - POSTGRES_DB=smart-home-tech
+        - POSTGRES_USER=user
+        - POSTGRES_PASSWORD=password
+    healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U user -d smart-home-tech" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
