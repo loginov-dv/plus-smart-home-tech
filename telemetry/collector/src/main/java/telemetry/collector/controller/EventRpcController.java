@@ -9,15 +9,15 @@ import net.devh.boot.grpc.server.service.GrpcService;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import telemetry.collector.KafkaCollectorProducer;
+import telemetry.collector.config.KafkaConfig;
+import telemetry.collector.service.Collector;
 import telemetry.collector.exception.HandlerNotFoundException;
-import telemetry.collector.model.rpc.hub.HubEventHandler;
-import telemetry.collector.model.rpc.sensor.SensorEventHandler;
+import telemetry.collector.model.hub.HubEventHandler;
+import telemetry.collector.model.sensor.SensorEventHandler;
 
 import java.util.Map;
 import java.util.Set;
@@ -27,18 +27,17 @@ import java.util.stream.Collectors;
 @Slf4j
 @GrpcService
 public class EventRpcController extends CollectorControllerGrpc.CollectorControllerImplBase {
-    private final KafkaCollectorProducer producer;
-    private final String sensorsTopic;
-    private final String hubsTopic;
+    private final KafkaConfig kafkaConfig;
+    private final Collector collector;
     private final Map<SensorEventProto.PayloadCase, SensorEventHandler> sensorEventHandlers;
     private final Map<HubEventProto.PayloadCase, HubEventHandler> hubEventHandlers;
 
     @Autowired
-    public EventRpcController(Set<SensorEventHandler> sensorEventHandlerSet,
+    public EventRpcController(KafkaConfig kafkaConfig,
+                              Set<SensorEventHandler> sensorEventHandlerSet,
                               Set<HubEventHandler> hubEventHandlerSet,
-                              KafkaCollectorProducer producer,
-                              @Value("${telemetry.collector.kafka.sensors.topic}") String sensorsTopic,
-                              @Value("${telemetry.collector.kafka.hubs.topic}") String hubsTopic) {
+                              Collector collector) {
+        this.kafkaConfig = kafkaConfig;
         this.sensorEventHandlers = sensorEventHandlerSet.stream()
                 .collect(Collectors.toMap(
                         SensorEventHandler::getMessageType,
@@ -49,13 +48,10 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
                         HubEventHandler::getMessageType,
                         Function.identity()
                 ));
+        this.collector = collector;
 
-        log.info("Topic for sensors messages: {}", sensorsTopic);
-        log.info("Topic for hubs messages: {}", hubsTopic);
-
-        this.producer = producer;
-        this.sensorsTopic = sensorsTopic;
-        this.hubsTopic = hubsTopic;
+        log.info("Topic for sensors messages: {}", kafkaConfig.getTopics().getSensors());
+        log.info("Topic for hubs messages: {}", kafkaConfig.getTopics().getSensors());
     }
 
     @Override
@@ -68,7 +64,7 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
                 SpecificRecordBase specificRecordBase = sensorEventHandler.toAvro(request);
 
                 log.debug("Sending sensor event message: {}", specificRecordBase);
-                producer.send(sensorsTopic, request.getHubId(), specificRecordBase);
+                collector.send(kafkaConfig.getTopics().getSensors(), request.getHubId(), specificRecordBase);
             } else {
                 log.warn("Couldn't find handler for sensor event: {}", request.getPayloadCase());
                 throw new HandlerNotFoundException("Couldn't find handler for sensor event: " + request.getPayloadCase());
@@ -96,7 +92,7 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
                 SpecificRecordBase specificRecordBase = hubEventHandler.toAvro(request);
 
                 log.debug("Sending hub event message: {}", specificRecordBase);
-                producer.send(hubsTopic, request.getHubId(), specificRecordBase);
+                collector.send(kafkaConfig.getTopics().getHubs(), request.getHubId(), specificRecordBase);
             } else {
                 log.warn("Couldn't find handler for hub event: {}", request.getPayloadCase());
                 throw new HandlerNotFoundException("Couldn't find handler for hub event: " + request.getPayloadCase());
