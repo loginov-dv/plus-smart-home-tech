@@ -1,4 +1,4 @@
-package telemetry.collector.model.rpc.hub;
+package telemetry.collector.model.hub;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;

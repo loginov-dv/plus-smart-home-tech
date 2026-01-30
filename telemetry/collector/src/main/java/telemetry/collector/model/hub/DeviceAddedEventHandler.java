@@ -1,4 +1,4 @@
-package telemetry.collector.model.rpc.hub;
+package telemetry.collector.model.hub;
 
 import com.google.protobuf.Timestamp;
 import org.apache.avro.specific.SpecificRecordBase;

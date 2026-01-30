@@ -1,30 +1,29 @@
-package telemetry.collector.model.rpc.sensor;
+package telemetry.collector.model.sensor;
 
 import com.google.protobuf.Timestamp;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
+import ru.yandex.practicum.grpc.telemetry.event.SwitchSensorProto;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
 import java.time.Instant;
 
 @Component
-public class TemperatureSensorEventHandler implements SensorEventHandler {
+public class SwitchSensorEventHandler implements SensorEventHandler {
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
-        return SensorEventProto.PayloadCase.TEMPERATURE_SENSOR;
+        return SensorEventProto.PayloadCase.SWITCH_SENSOR;
     }
 
     @Override
     public SpecificRecordBase toAvro(SensorEventProto sensorEventProto) {
-        TemperatureSensorProto temperatureSensorProto = sensorEventProto.getTemperatureSensor();
-        TemperatureSensorAvro temperatureSensorAvro = TemperatureSensorAvro.newBuilder()
-                .setTemperatureC(temperatureSensorProto.getTemperatureC())
-                .setTemperatureF(temperatureSensorProto.getTemperatureF())
+        SwitchSensorProto switchSensorProto = sensorEventProto.getSwitchSensor();
+        SwitchSensorAvro switchSensorAvro = SwitchSensorAvro.newBuilder()
+                .setState(switchSensorProto.getState())
                 .build();
         Timestamp timestamp = sensorEventProto.getTimestamp();
 
@@ -32,7 +31,7 @@ public class TemperatureSensorEventHandler implements SensorEventHandler {
                 .setId(sensorEventProto.getId())
                 .setHubId(sensorEventProto.getHubId())
                 .setTimestamp(Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos()))
-                .setPayload(temperatureSensorAvro)
+                .setPayload(switchSensorAvro)
                 .build();
     }
 }

@@ -1,29 +1,31 @@
-package telemetry.collector.model.rpc.sensor;
+package telemetry.collector.model.sensor;
 
 import com.google.protobuf.Timestamp;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 
+import ru.yandex.practicum.grpc.telemetry.event.MotionSensorProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.SwitchSensorProto;
+import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
 import java.time.Instant;
 
 @Component
-public class SwitchSensorEventHandler implements SensorEventHandler {
+public class MotionSensorEventHandler implements SensorEventHandler {
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
-        return SensorEventProto.PayloadCase.SWITCH_SENSOR;
+        return SensorEventProto.PayloadCase.MOTION_SENSOR;
     }
 
     @Override
     public SpecificRecordBase toAvro(SensorEventProto sensorEventProto) {
-        SwitchSensorProto switchSensorProto = sensorEventProto.getSwitchSensor();
-        SwitchSensorAvro switchSensorAvro = SwitchSensorAvro.newBuilder()
-                .setState(switchSensorProto.getState())
+        MotionSensorProto motionSensorProto = sensorEventProto.getMotionSensor();
+        MotionSensorAvro motionSensorAvro = MotionSensorAvro.newBuilder()
+                .setLinkQuality(motionSensorProto.getLinkQuality())
+                .setMotion(motionSensorProto.getMotion())
+                .setVoltage(motionSensorProto.getVoltage())
                 .build();
         Timestamp timestamp = sensorEventProto.getTimestamp();
 
@@ -31,7 +33,7 @@ public class SwitchSensorEventHandler implements SensorEventHandler {
                 .setId(sensorEventProto.getId())
                 .setHubId(sensorEventProto.getHubId())
                 .setTimestamp(Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos()))
-                .setPayload(switchSensorAvro)
+                .setPayload(motionSensorAvro)
                 .build();
     }
 }

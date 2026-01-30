@@ -1,30 +1,30 @@
-package telemetry.collector.model.rpc.sensor;
+package telemetry.collector.model.sensor;
 
 import com.google.protobuf.Timestamp;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 
-import ru.yandex.practicum.grpc.telemetry.event.LightSensorProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
+import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
 
 import java.time.Instant;
 
 @Component
-public class LightSensorEventHandler implements SensorEventHandler {
+public class TemperatureSensorEventHandler implements SensorEventHandler {
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
-        return SensorEventProto.PayloadCase.LIGHT_SENSOR;
+        return SensorEventProto.PayloadCase.TEMPERATURE_SENSOR;
     }
 
     @Override
     public SpecificRecordBase toAvro(SensorEventProto sensorEventProto) {
-        LightSensorProto lightSensorProto = sensorEventProto.getLightSensor();
-        LightSensorAvro lightSensorAvro = LightSensorAvro.newBuilder()
-                .setLinkQuality(lightSensorProto.getLinkQuality())
-                .setLuminosity(lightSensorProto.getLuminosity())
+        TemperatureSensorProto temperatureSensorProto = sensorEventProto.getTemperatureSensor();
+        TemperatureSensorAvro temperatureSensorAvro = TemperatureSensorAvro.newBuilder()
+                .setTemperatureC(temperatureSensorProto.getTemperatureC())
+                .setTemperatureF(temperatureSensorProto.getTemperatureF())
                 .build();
         Timestamp timestamp = sensorEventProto.getTimestamp();
 
@@ -32,7 +32,7 @@ public class LightSensorEventHandler implements SensorEventHandler {
                 .setId(sensorEventProto.getId())
                 .setHubId(sensorEventProto.getHubId())
                 .setTimestamp(Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos()))
-                .setPayload(lightSensorAvro)
+                .setPayload(temperatureSensorAvro)
                 .build();
     }
 }
