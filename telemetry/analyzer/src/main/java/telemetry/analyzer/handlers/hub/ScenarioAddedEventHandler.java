@@ -44,7 +44,7 @@ public class ScenarioAddedEventHandler implements HubEventHandler {
         Optional<Scenario> maybeScenario = scenarioRepository.findByHubIdAndName(hubId, scenarioName);
         Scenario scenario;
 
-        if (maybeScenario.isPresent()) { // TODO: rewrite
+        if (maybeScenario.isPresent()) {
             log.debug("Hub with id = {} already has scenario with name = {}", hubId, scenarioName);
             log.debug("Rewriting all conditions and actions...");
 

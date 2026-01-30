@@ -29,16 +29,10 @@ public class LightSensorEventHandler implements SensorEventHandler {
                     "sensor event", conditionType.name()));
         }
 
-        boolean result = isResult(condition, conditionOperation, lightSensor);
-
-        return result;
-    }
-
-    private boolean isResult(Condition condition, ConditionOperationAvro conditionOperation, LightSensorAvro lightSensor) {
         boolean result = false;
 
         if (conditionOperation.equals(ConditionOperationAvro.EQUALS)) {
-            result = lightSensor.getLuminosity() == condition.getValue(); // TODO: null value
+            result = lightSensor.getLuminosity() == condition.getValue();
         } else if (conditionOperation.equals(ConditionOperationAvro.GREATER_THAN)) {
             result = lightSensor.getLuminosity() > condition.getValue();
         } else if (conditionOperation.equals(ConditionOperationAvro.LOWER_THAN)) {

@@ -32,7 +32,7 @@ public class TemperatureSensorEventHandler implements SensorEventHandler {
         boolean result = false;
 
         if (conditionOperation.equals(ConditionOperationAvro.EQUALS)) {
-            result = temperatureSensor.getTemperatureC() == condition.getValue(); // TODO: value = null in snapshot
+            result = temperatureSensor.getTemperatureC() == condition.getValue();
         } else if (conditionOperation.equals(ConditionOperationAvro.GREATER_THAN)) {
             result = temperatureSensor.getTemperatureC() > condition.getValue();
         } else if (conditionOperation.equals(ConditionOperationAvro.LOWER_THAN)) {

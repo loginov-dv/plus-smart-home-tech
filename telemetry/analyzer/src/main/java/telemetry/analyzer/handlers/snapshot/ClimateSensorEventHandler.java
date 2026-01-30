@@ -19,16 +19,15 @@ public class ClimateSensorEventHandler implements SensorEventHandler {
 
     @Override
     public boolean checkCondition(Object event, Condition condition) {
-        ClimateSensorAvro climateSensorAvro = (ClimateSensorAvro) event;
+        ClimateSensorAvro climateSensor = (ClimateSensorAvro) event;
         ConditionTypeAvro conditionType = condition.getType();
         ConditionOperationAvro conditionOperation = condition.getOperation();
-
-        int valueActual; // TODO: value = null in snapshot
+        int valueActual;
 
         switch (conditionType) {
-            case TEMPERATURE -> valueActual = climateSensorAvro.getTemperatureC();
-            case HUMIDITY -> valueActual = climateSensorAvro.getHumidity();
-            case CO2LEVEL -> valueActual = climateSensorAvro.getCo2Level();
+            case TEMPERATURE -> valueActual = climateSensor.getTemperatureC();
+            case HUMIDITY -> valueActual = climateSensor.getHumidity();
+            case CO2LEVEL -> valueActual = climateSensor.getCo2Level();
             default -> {
                 log.error("Invalid condition type = {} for climate sensor event", conditionType);
                 throw new InvalidConditionTypeException(String.format("Invalid condition type = %s for climate " +
