@@ -188,6 +188,7 @@ public class SnapshotProcessor {
                 }
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             log.error("Error processing snapshot: {}", ex.getMessage());
         }
     }
