@@ -37,21 +37,21 @@ public class Aggregator {
 
         Properties consumerConfig = new Properties();
         Properties producerConfig = new Properties();
-        String serverUrl = kafkaConfig.getServer();
 
-        consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "aggregator");
-        consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, "aggregator.group");
-        consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, serverUrl);
+        consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, kafkaConfig.getConsumer().getClientId());
+        consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfig.getConsumer().getGroupId());
+        consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getServer());
         consumerConfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorEventDeserializer.class);
+        consumerConfig.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, serverUrl);
+        producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getServer());
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class);
 
         consumer = new KafkaConsumer<>(consumerConfig);
         producer = new KafkaProducer<>(producerConfig);
-        log.info("Aggregator is using Kafka-server at url: {}", serverUrl);
+        log.info("Aggregator is using Kafka-server at url: {}", kafkaConfig.getServer());
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
@@ -63,32 +63,38 @@ public class Aggregator {
             log.info("Aggregator subscribed to the topic: {}", sensorsTopic);
 
             while (true) {
-                ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, SensorEventAvro> records =
+                        consumer.poll(Duration.ofMillis(kafkaConfig.getConsumer().getPollDurationMs()));
 
                 for (ConsumerRecord<String, SensorEventAvro> consumerRecord : records) {
                     SensorEventAvro sensorEvent = consumerRecord.value();
-
                     log.debug("Received sensor event: {}", sensorEvent);
+
+                    String hubId = sensorEvent.getHubId();
 
                     Optional<SensorsSnapshotAvro> maybeSnapshot = updateState(sensorEvent);
 
                     if (maybeSnapshot.isEmpty()) {
                         log.debug("No need for snapshot update");
+                        log.debug("Sensor event has been processed");
                         continue;
                     }
 
                     log.debug("Snapshot has been updated");
                     SensorsSnapshotAvro snapshot = maybeSnapshot.get();
 
-                    snapshots.put(sensorEvent.getHubId(), snapshot);
+                    snapshots.put(hubId, snapshot);
 
                     log.debug("Sending updated snapshot to the topic [{}] with key [{}]",
-                            kafkaConfig.getTopics().getSnapshots(), sensorEvent.getHubId());
-
+                            kafkaConfig.getTopics().getSnapshots(), hubId);
                     ProducerRecord<String, SpecificRecordBase> producerRecord =
-                            new ProducerRecord<>(kafkaConfig.getTopics().getSnapshots(), sensorEvent.getHubId(), snapshot);
+                            new ProducerRecord<>(kafkaConfig.getTopics().getSnapshots(), hubId, snapshot);
+
                     producer.send(producerRecord);
+                    log.debug("Sensor event has been processed");
                 }
+
+                consumer.commitSync();
             }
         } catch (WakeupException ignored) {
             // обработка в блоке finally
@@ -109,11 +115,11 @@ public class Aggregator {
     }
 
     private Optional<SensorsSnapshotAvro> updateState(SensorEventAvro sensorEvent) {
-        SensorsSnapshotAvro snapshot = snapshots.get(sensorEvent.getHubId());
         String hubId = sensorEvent.getHubId();
         String sensorId = sensorEvent.getId();
-
         log.debug("Event sensor_id: {}", sensorId);
+
+        SensorsSnapshotAvro snapshot = snapshots.get(sensorEvent.getHubId());
 
         // если для хаба снапшот отсутствует, создаём новый
         if (snapshot == null) {
@@ -135,14 +141,13 @@ public class Aggregator {
                     .setTimestamp(sensorEvent.getTimestamp())
                     .setSensorsState(sensorStateMap)
                     .build();
-
             log.debug("New snapshot added for hub_id: {}", hubId);
 
             return Optional.of(snapshot);
         }
 
         // если есть снапшот
-        log.debug("Found snapshot for hub_id [{}]", hubId);
+        log.debug("Found snapshot for hub_id: {}", hubId);
 
         Map<String, SensorStateAvro> sensorStateMap = snapshot.getSensorsState();
         SensorStateAvro sensorState = sensorStateMap.get(sensorId);
@@ -181,6 +186,7 @@ public class Aggregator {
 
         // обновляем состояние
         log.debug("New state: {}", sensorEvent.getPayload());
+
         sensorState.setData(sensorEvent.getPayload());
         sensorState.setTimestamp(sensorEvent.getTimestamp());
         sensorStateMap.put(sensorId, sensorState);

@@ -15,3 +15,7 @@ kafka:
   topics:
     sensors: 'telemetry.sensors.v1'
     snapshots: 'telemetry.snapshots.v1'
+  consumer:
+    client-id: 'aggregator'
+    group-id: 'aggregator.group'
+    poll-duration-ms: 5000
