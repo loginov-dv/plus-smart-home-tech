@@ -34,13 +34,14 @@
         <lombok.version>1.18.32</lombok.version>
         <slf4j.version>2.0.13</slf4j.version>
         <spring-boot.version>3.3.2</spring-boot.version>
+        <pgsql.version>42.7.3</pgsql.version>
+        <h2.version>2.2.224</h2.version>
+
 
         <!--       Plugins       -->
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <avro-maven-plugin.version>${avro.version}</avro-maven-plugin.version>
         <protobuf-plugin.version>2.4.0</protobuf-plugin.version>
-
-        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -67,6 +68,12 @@
             <dependency>
                 <groupId>net.devh</groupId>
                 <artifactId>grpc-spring-boot-starter</artifactId>
+                <version>${grpc-spring-boot-starter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.devh</groupId>
+                <artifactId>grpc-client-spring-boot-starter</artifactId>
                 <version>${grpc-spring-boot-starter.version}</version>
             </dependency>
 
@@ -121,6 +128,24 @@
             </dependency>
 
             <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${pgsql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
@@ -144,35 +169,18 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.avro</groupId>
                     <artifactId>avro-maven-plugin</artifactId>
                     <version>${avro-maven-plugin.version}</version>
                 </plugin>
+
                 <plugin>
                     <groupId>io.github.ascopes</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
                     <version>${protobuf-plugin.version}</version>
                 </plugin>
-<!--                <plugin>-->
-<!--                    <groupId>org.apache.maven.plugins</groupId>-->
-<!--                    <artifactId>maven-checkstyle-plugin</artifactId>-->
-<!--                    <version>${maven-checkstyle-plugin.version}</version>-->
-<!--                    <configuration>-->
-<!--                        <configLocation>checkstyle.xml</configLocation>-->
-<!--                        <failOnViolation>true</failOnViolation>-->
-<!--                        <includeTestSourceDirectory>true</includeTestSourceDirectory>-->
-<!--                        <logViolationsToConsole>true</logViolationsToConsole>-->
-<!--                    </configuration>-->
-<!--                    <executions>-->
-<!--                        <execution>-->
-<!--                            <goals>-->
-<!--                                <goal>check</goal>-->
-<!--                            </goals>-->
-<!--                            <phase>compile</phase>-->
-<!--                        </execution>-->
-<!--                    </executions>-->
-<!--                </plugin>-->
             </plugins>
         </pluginManagement>
     </build>
