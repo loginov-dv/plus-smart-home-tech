@@ -1,5 +1,7 @@
-# Tomcat
-server.port: 8080
+# Spring
+spring:
+  main:
+    web-application-type: none
 
 # gRPC
 grpc.server.port: 59091
