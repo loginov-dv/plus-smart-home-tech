@@ -1,0 +1,20 @@
+# Spring
+spring:
+  main:
+    web-application-type: none
+
+# gRPC
+grpc.server.port: 59091
+
+# Logging
+logging:
+  level:
+    root: INFO
+    telemetry.collector: DEBUG
+
+# Kafka custom properties
+kafka:
+  server: 'localhost:9092'
+  topics:
+    sensors: 'telemetry.sensors.v1'
+    hubs: 'telemetry.hubs.v1'
