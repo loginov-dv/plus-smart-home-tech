@@ -36,3 +36,12 @@ kafka:
   topics:
     hubs: 'telemetry.hubs.v1'
     snapshots: 'telemetry.snapshots.v1'
+  hub-consumer:
+    client-id: 'hub.processor'
+    group-id: 'analyzer.hubs.group'
+    poll-duration-ms: 10000
+  snapshot-consumer:
+    client-id: 'snapshot.processor'
+    group-id: 'analyzer.snapshots.group'
+    poll-duration-ms: 10000
+    manual-commit-records-count: 3

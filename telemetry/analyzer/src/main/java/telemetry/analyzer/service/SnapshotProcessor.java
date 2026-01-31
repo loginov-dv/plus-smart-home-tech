@@ -3,10 +3,8 @@ package telemetry.analyzer.service;
 import com.google.protobuf.Timestamp;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +27,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,6 +39,7 @@ public class SnapshotProcessor {
     private final HubRouterControllerGrpc.HubRouterControllerBlockingStub hubRouterClient;
     private final ScenarioRepository scenarioRepository;
     private final Map<Class<?>, SensorEventHandler> handlers;
+    private final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
 
     @Autowired
     public SnapshotProcessor(KafkaConfig kafkaConfig,
@@ -57,16 +53,16 @@ public class SnapshotProcessor {
                 .collect(Collectors.toMap(SensorEventHandler::getType, Function.identity()));
 
         Properties config = new Properties();
-        String serverUrl = kafkaConfig.getServer();
 
-        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "snapshot.processor");
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer.snapshots.group");
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, serverUrl);
+        config.put(ConsumerConfig.CLIENT_ID_CONFIG, kafkaConfig.getSnapshotConsumer().getClientId());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfig.getSnapshotConsumer().getGroupId());
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getServer());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorsSnapshotDeserializer.class);
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         consumer = new KafkaConsumer<>(config);
-        log.info("SnapshotProcessor is using Kafka-server at url: {}", serverUrl);
+        log.info("SnapshotProcessor is using Kafka-server at url: {}", kafkaConfig.getServer());
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
@@ -78,9 +74,49 @@ public class SnapshotProcessor {
             log.info("SnapshotProcessor subscribed to the topic: {}", snapshotTopic);
 
             while (true) {
-                ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, SensorsSnapshotAvro> records =
+                        consumer.poll(Duration.ofMillis(kafkaConfig.getSnapshotConsumer().getPollDurationMs()));
 
-                records.forEach(this::handleSnapshot);
+                int recordCount = 0;
+
+                for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
+                    try {
+                        SensorsSnapshotAvro snapshot = record.value();
+                        log.debug("Received snapshot: {}", snapshot);
+
+                        List<Scenario> scenarios = scenarioRepository.findByHubId(snapshot.getHubId());
+                        Map<String, SensorStateAvro> states = snapshot.getSensorsState();
+
+                        // проверяем каждый сценарий
+                        for (Scenario scenario : scenarios) {
+                            log.debug("Scenario: {}", scenario);
+
+                            Set<ScenarioCondition> scenarioConditions = scenario.getScenarioConditions();
+
+                            // проверка выполнения условий
+                            if (!isSatisfiesConditions(scenarioConditions, states)) {
+                                log.debug("Conditions for scenario were not met");
+                            } else {
+                                log.debug("All conditions for scenario execution were met");
+                                sendDeviceActions(scenario, scenario.getScenarioActions());
+                            }
+                        }
+
+                        log.debug("Snapshot has been processed");
+                        // промежуточная фиксация для избежания повторной обработки снапшотов
+                        manageOffsets(record, recordCount, consumer);
+                        recordCount++;
+                    } catch (Exception ex) {
+                        log.error("Error processing snapshot: {}", ex.getMessage());
+
+                        StringWriter stringWriter = new StringWriter();
+                        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+                        ex.printStackTrace(printWriter);
+                    }
+                }
+
+                consumer.commitAsync();
             }
         } catch (WakeupException ignored) {
             // обработка в блоке finally
@@ -88,44 +124,11 @@ public class SnapshotProcessor {
             log.error("Error processing snapshot topic messages: {}", ex.getMessage());
         } finally {
             try {
-                consumer.commitSync();
+                consumer.commitSync(currentOffsets);
             } finally {
                 log.info("Closing SnapshotProcessor Kafka-consumer...");
                 consumer.close();
             }
-        }
-    }
-
-    private void handleSnapshot(ConsumerRecord<String, SensorsSnapshotAvro> record) {
-        try {
-            SensorsSnapshotAvro snapshot = record.value();
-            log.debug("Received snapshot: {}", snapshot);
-
-            List<Scenario> scenarios = scenarioRepository.findByHubId(snapshot.getHubId());
-            Map<String, SensorStateAvro> states = snapshot.getSensorsState();
-
-            // проверяем каждый сценарий
-            for (Scenario scenario : scenarios) {
-                log.debug("Scenario: {}", scenario);
-
-                Set<ScenarioCondition> scenarioConditions = scenario.getScenarioConditions();
-
-                // обработка промежуточной сущности
-                if (!isSatisfiesConditions(scenarioConditions, states)) {
-                    // если условия не выполнены, сценарий не запускается
-                    log.debug("Conditions for scenario was not met");
-                } else {
-                    log.debug("All conditions for scenario execution were met");
-                    sendDeviceActions(scenario, scenario.getScenarioActions());
-                }
-            }
-        } catch (Exception ex) {
-            log.error("Error processing snapshot: {}", ex.getMessage());
-
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-
-            ex.printStackTrace(printWriter);
         }
     }
 
@@ -197,6 +200,23 @@ public class SnapshotProcessor {
 
             log.info("Sending device action request: {}", actionRequest.getAllFields());
             hubRouterClient.handleDeviceAction(actionRequest);
+        }
+    }
+
+    private void manageOffsets(ConsumerRecord<String, SensorsSnapshotAvro> record,
+                               int count,
+                               KafkaConsumer<String, SensorsSnapshotAvro> consumer) {
+        currentOffsets.put(
+                new TopicPartition(record.topic(), record.partition()),
+                new OffsetAndMetadata(record.offset() + 1)
+        );
+
+        if (count % kafkaConfig.getSnapshotConsumer().getManualCommitRecordsCount() == 0) {
+            consumer.commitAsync(currentOffsets, (offsets, exception) -> {
+                if (exception != null) {
+                    log.error("Error during offset commit: {}", offsets, exception);
+                }
+            });
         }
     }
 }

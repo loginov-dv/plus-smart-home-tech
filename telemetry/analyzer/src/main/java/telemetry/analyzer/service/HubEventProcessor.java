@@ -36,16 +36,16 @@ public class HubEventProcessor implements Runnable {
                 .collect(Collectors.toMap(HubEventHandler::getType, Function.identity()));
 
         Properties config = new Properties();
-        String serverUrl = kafkaConfig.getServer();
 
-        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "hub.processor");
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer.hubs.group");
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, serverUrl);
+        config.put(ConsumerConfig.CLIENT_ID_CONFIG, kafkaConfig.getHubConsumer().getClientId());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfig.getHubConsumer().getGroupId());
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfig.getServer());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, HubEventDeserializer.class);
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         consumer = new KafkaConsumer<>(config);
-        log.info("HubEventProcessor is using Kafka-server at url: {}", serverUrl);
+        log.info("HubEventProcessor is using Kafka-server at url: {}", kafkaConfig.getServer());
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
     }
@@ -58,26 +58,29 @@ public class HubEventProcessor implements Runnable {
             log.info("HubEventProcessor subscribed to the topic: {}", hubsTopic);
 
             while (true) {
-                ConsumerRecords<String, HubEventAvro> records = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, HubEventAvro> records =
+                        consumer.poll(Duration.ofMillis(kafkaConfig.getHubConsumer().getPollDurationMs()));
 
                 for (ConsumerRecord<String, HubEventAvro> record : records) {
                     try {
                         HubEventAvro hubEvent = record.value();
-                        log.debug("Record value: {}", hubEvent);
+                        log.debug("Received hub event: {}", hubEvent);
 
                         HubEventHandler handler = handlers.get(hubEvent.getPayload().getClass());
 
                         if (handler == null) {
-                            log.warn("Couldn't find handler for hub event: {}", hubEvent.getPayload().getClass());
+                            log.error("Couldn't find handler for hub event: {}", hubEvent.getPayload().getClass());
                             continue;
                         }
 
                         handler.process(hubEvent.getPayload(), hubEvent.getHubId());
-                        log.debug("Record handled");
+                        log.debug("Hub event has been processed");
                     } catch (Exception ex) {
-                        log.warn("Error processing hub event: {}", ex.getMessage());
+                        log.error("Error processing hub event: {}", ex.getMessage());
                     }
                 }
+
+                consumer.commitSync();
             }
         } catch (WakeupException ignored) {
             // обработка в блоке finally
