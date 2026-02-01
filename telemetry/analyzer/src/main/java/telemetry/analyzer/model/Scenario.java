@@ -11,7 +11,7 @@ import java.util.Set;
 @Entity
 @Table(
         name = "scenarios",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"hud_id", "name"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"hub_id", "name"})
 )
 @Getter
 @Setter
