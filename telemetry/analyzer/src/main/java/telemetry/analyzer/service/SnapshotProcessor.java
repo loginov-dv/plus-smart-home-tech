@@ -122,6 +122,11 @@ public class SnapshotProcessor {
             // обработка в блоке finally
         } catch (Exception ex) {
             log.error("Error processing snapshot topic messages: {}", ex.getMessage());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+
+            ex.printStackTrace(printWriter);
         } finally {
             try {
                 consumer.commitSync(currentOffsets);

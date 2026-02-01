@@ -14,6 +14,8 @@ import serialization.avro.HubEventDeserializer;
 import telemetry.analyzer.config.KafkaConfig;
 import telemetry.analyzer.handlers.hub.HubEventHandler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +79,11 @@ public class HubEventProcessor implements Runnable {
                         log.debug("Hub event has been processed");
                     } catch (Exception ex) {
                         log.error("Error processing hub event: {}", ex.getMessage());
+
+                        StringWriter stringWriter = new StringWriter();
+                        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+                        ex.printStackTrace(printWriter);
                     }
                 }
 
@@ -86,6 +93,11 @@ public class HubEventProcessor implements Runnable {
             // обработка в блоке finally
         } catch (Exception ex) {
             log.error("Error processing hub topic messages: {}", ex.getMessage());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+
+            ex.printStackTrace(printWriter);
         } finally {
             try {
                 consumer.commitSync();

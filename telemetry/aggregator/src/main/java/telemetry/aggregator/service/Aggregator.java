@@ -21,6 +21,8 @@ import serialization.avro.GeneralAvroSerializer;
 import serialization.avro.SensorEventDeserializer;
 import telemetry.aggregator.config.KafkaConfig;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Duration;
 import java.util.*;
 
@@ -100,6 +102,11 @@ public class Aggregator {
             // обработка в блоке finally
         } catch (Exception ex) {
             log.error("Error processing sensor event: {}", ex.getMessage());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+
+            ex.printStackTrace(printWriter);
         } finally {
             try {
                 producer.flush();

@@ -19,6 +19,8 @@ import telemetry.collector.exception.HandlerNotFoundException;
 import telemetry.collector.model.hub.HubEventHandler;
 import telemetry.collector.model.sensor.SensorEventHandler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -72,12 +74,17 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
 
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+
+            ex.printStackTrace(printWriter);
             responseObserver.onError(new StatusRuntimeException(
                     Status.INTERNAL
-                            .withDescription(e.getLocalizedMessage())
-                            .withCause(e)
+                            .withDescription(ex.getLocalizedMessage())
+                            .withCause(ex)
             ));
         }
     }
@@ -100,12 +107,17 @@ public class EventRpcController extends CollectorControllerGrpc.CollectorControl
 
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+
+            ex.printStackTrace(printWriter);
             responseObserver.onError(new StatusRuntimeException(
                     Status.INTERNAL
-                            .withDescription(e.getLocalizedMessage())
-                            .withCause(e)
+                            .withDescription(ex.getLocalizedMessage())
+                            .withCause(ex)
             ));
         }
     }
