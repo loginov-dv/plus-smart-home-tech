@@ -110,7 +110,7 @@ public class Aggregator {
                                 new OffsetAndMetadata(consumerRecord.offset() + 1)
                         );
                     } catch (InterruptedException | ExecutionException ex) {
-                        // не коммитим ничего, необработанные события получим снова в следующей итерации
+                        // прерываем цикл, необработанные события получим снова в следующем батче
                         log.error("Error sending snapshot: {}", ex.getMessage());
 
                         StringWriter stringWriter = new StringWriter();
