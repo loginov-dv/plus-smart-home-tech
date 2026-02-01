@@ -24,6 +24,7 @@ import telemetry.aggregator.config.KafkaConfig;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -197,7 +198,12 @@ public class Aggregator {
         sensorState.setData(sensorEvent.getPayload());
         sensorState.setTimestamp(sensorEvent.getTimestamp());
         sensorStateMap.put(sensorId, sensorState);
-        snapshot.setTimestamp(sensorEvent.getTimestamp());
+
+        Optional<Instant> latestTimestamp = sensorStateMap.values().stream()
+                .map(SensorStateAvro::getTimestamp)
+                .max(Instant::compareTo);
+
+        snapshot.setTimestamp(latestTimestamp.get());
 
         return Optional.of(snapshot);
     }
