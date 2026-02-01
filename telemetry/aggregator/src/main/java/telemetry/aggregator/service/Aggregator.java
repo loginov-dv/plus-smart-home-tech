@@ -2,13 +2,11 @@ package telemetry.aggregator.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -26,6 +24,7 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
@@ -34,6 +33,7 @@ public class Aggregator {
     private final KafkaConsumer<String, SensorEventAvro> consumer;
     private final KafkaProducer<String, SpecificRecordBase> producer;
     private final Map<String, SensorsSnapshotAvro> snapshots = new HashMap<>();
+    private final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
 
     public Aggregator(KafkaConfig kafkaConfig) {
         this.kafkaConfig = kafkaConfig;
@@ -80,6 +80,13 @@ public class Aggregator {
                     if (maybeSnapshot.isEmpty()) {
                         log.debug("No need for snapshot update");
                         log.debug("Sensor event has been processed");
+
+                        // даже если снапшот не обновился, считаем сообщение обработанным
+                        currentOffsets.put(
+                                new TopicPartition(consumerRecord.topic(), consumerRecord.partition()),
+                                new OffsetAndMetadata(consumerRecord.offset() + 1)
+                        );
+
                         continue;
                     }
 
@@ -93,11 +100,30 @@ public class Aggregator {
                     ProducerRecord<String, SpecificRecordBase> producerRecord =
                             new ProducerRecord<>(kafkaConfig.getTopics().getSnapshots(), hubId, snapshot);
 
-                    producer.send(producerRecord);
-                    log.debug("Sensor event has been processed");
+                    try {
+                        producer.send(producerRecord).get();
+                        log.debug("Sensor event has been processed");
+
+                        // сохраняем оффсет при успешной отправке
+                        currentOffsets.put(
+                                new TopicPartition(consumerRecord.topic(), consumerRecord.partition()),
+                                new OffsetAndMetadata(consumerRecord.offset() + 1)
+                        );
+                    } catch (InterruptedException | ExecutionException ex) {
+                        // не коммитим ничего, необработанные события получим снова в следующей итерации
+                        log.error("Error sending snapshot: {}", ex.getMessage());
+
+                        StringWriter stringWriter = new StringWriter();
+                        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+                        ex.printStackTrace(printWriter);
+
+                        break;
+                    }
                 }
 
-                consumer.commitSync();
+                // коммитим только оффсеты с успешно отправленными снапшотами
+                consumer.commitSync(currentOffsets);
             }
         } catch (WakeupException ignored) {
             // обработка в блоке finally
@@ -111,7 +137,7 @@ public class Aggregator {
         } finally {
             try {
                 producer.flush();
-                consumer.commitSync();
+                consumer.commitSync(currentOffsets);
             } finally {
                 log.info("Closing Aggregator Kafka-producer...");
                 producer.close();
