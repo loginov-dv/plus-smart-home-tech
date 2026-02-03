@@ -33,3 +33,20 @@ services:
                              --partitions 1 --replication-factor 1 --if-not-exists \
                              --bootstrap-server kafka:29092'"
     init: true
+
+  analyzer-db:
+    image: postgres:16.1
+    container_name: analyzer-db
+    depends_on:
+      - kafka
+    ports:
+        - "5432:5432"
+    environment:
+        - POSTGRES_DB=smart-home-tech
+        - POSTGRES_USER=user
+        - POSTGRES_PASSWORD=password
+    healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U user -d smart-home-tech" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
