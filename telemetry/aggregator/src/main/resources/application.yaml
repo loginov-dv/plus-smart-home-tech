@@ -1,21 +1,11 @@
-# Spring
 spring:
-  main:
-    web-application-type: none
-
-# Logging
-logging:
-  level:
-    root: INFO
-    telemetry.aggregator: DEBUG
-
-# Kafka custom properties
-kafka:
-  server: 'localhost:9092'
-  topics:
-    sensors: 'telemetry.sensors.v1'
-    snapshots: 'telemetry.snapshots.v1'
-  consumer:
-    client-id: 'aggregator'
-    group-id: 'aggregator.group'
-    poll-duration-ms: 5000
+  application:
+    name: aggregator
+  config:
+    import: configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000

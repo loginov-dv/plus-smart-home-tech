@@ -1,20 +1,11 @@
-# Spring
 spring:
-  main:
-    web-application-type: none
-
-# gRPC
-grpc.server.port: 59091
-
-# Logging
-logging:
-  level:
-    root: INFO
-    telemetry.collector: DEBUG
-
-# Kafka custom properties
-kafka:
-  server: 'localhost:9092'
-  topics:
-    sensors: 'telemetry.sensors.v1'
-    hubs: 'telemetry.hubs.v1'
+  application:
+    name: collector
+  config:
+    import: configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
