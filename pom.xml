@@ -35,7 +35,7 @@
         <slf4j.version>2.0.13</slf4j.version>
         <spring-boot.version>3.3.2</spring-boot.version>
         <pgsql.version>42.7.3</pgsql.version>
-        <h2.version>2.2.224</h2.version>
+        <spring-cloud-dependencies.version>2023.0.3</spring-cloud-dependencies.version>
 
 
         <!--       Plugins       -->
@@ -156,6 +156,14 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java-util</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud-dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
         </dependencies>
